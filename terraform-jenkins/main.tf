@@ -17,7 +17,7 @@ module "security_group" {
 module "jenkins" {
   source                    = "./jenkins"
   ami_id                    = var.ec2_ami_id
-  instance_type             = "t2.medium"
+  instance_type             = "t3.small"
   tag_name                  = "Jenkins:Ubuntu Linux EC2"
   public_key                = var.public_key
   subnet_id                 = tolist(module.networking.dev_proj_1_public_subnets)[0]
@@ -48,21 +48,5 @@ module "alb" {
   lb_listner_port           = 80
   lb_listner_protocol       = "HTTP"
   lb_listner_default_action = "forward"
-  lb_https_listner_port     = 443
-  lb_https_listner_protocol = "HTTPS"
-  dev_proj_1_acm_arn        = module.aws_ceritification_manager.dev_proj_1_acm_arn
   lb_target_group_attachment_port = 8080
-}
-
-module "hosted_zone" {
-  source          = "./hosted-zone"
-  domain_name     = "jenkins.jhooq.org"
-  aws_lb_dns_name = module.alb.aws_lb_dns_name
-  aws_lb_zone_id  = module.alb.aws_lb_zone_id
-}
-
-module "aws_ceritification_manager" {
-  source         = "./certificate-manager"
-  domain_name    = "jenkins.jhooq.org"
-  hosted_zone_id = module.hosted_zone.hosted_zone_id
 }
