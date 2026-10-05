@@ -18,8 +18,8 @@ pipeline {
                     url: 'https://github.com/HarikaB28/aws-project-with-tf-and-jenkins.git'
 
                 sh "ls -lart"
-		sh "cd terraform-infra"
-		sh "ls -lart"
+		        sh "cd terraform-infra"
+		        sh "ls -lart"
             }
         }
 
