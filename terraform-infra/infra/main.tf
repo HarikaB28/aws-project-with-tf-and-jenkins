@@ -25,14 +25,16 @@ module "security_group" {
 module "ec2" {
   source                   = "./ec2"
   ami_id                   = var.ec2_ami_id
-  instance_type            = "t2.micro"
+  instance_type            = "t3.micro"
   tag_name                 = "Ubuntu Linux EC2"
   public_key               = var.public_key
   subnet_id                = tolist(module.networking.dev_proj_1_public_subnets)[0]
   sg_enable_ssh_https      = module.security_group.sg_ec2_sg_ssh_http_id
   ec2_sg_name_for_python_api     = module.security_group.sg_ec2_for_python_api
   enable_public_ip_address = true
+
   user_data_install_apache = templatefile("./template/ec2_install_apache.sh", {})
+  iam_instance_profile       = aws_iam_instance_profile.ec2_profile.name
 }
 
 module "lb_target_group" {
@@ -57,23 +59,7 @@ module "alb" {
   lb_listner_port           = 5000
   lb_listner_protocol       = "HTTP"
   lb_listner_default_action = "forward"
-  lb_https_listner_port     = 443
-  lb_https_listner_protocol = "HTTPS"
-  dev_proj_1_acm_arn        = module.aws_ceritification_manager.dev_proj_1_acm_arn
   lb_target_group_attachment_port = 5000
-}
-
-module "hosted_zone" {
-  source          = "./hosted-zone"
-  domain_name     = var.domain_name
-  aws_lb_dns_name = module.alb.aws_lb_dns_name
-  aws_lb_zone_id  = module.alb.aws_lb_zone_id
-}
-
-module "aws_ceritification_manager" {
-  source         = "./certificate-manager"
-  domain_name    = var.domain_name
-  hosted_zone_id = module.hosted_zone.hosted_zone_id
 }
 
 module "rds_db_instance" {
@@ -86,3 +72,51 @@ module "rds_db_instance" {
   mysql_password       = "dbpassword"
   mysql_dbname         = "devprojdb"
 }
+
+resource "aws_ssm_parameter" "rds_host" {
+  name  = "/dev/db/host"
+  type  = "String"
+  value = module.rds_db_instance.rds_address
+}
+
+# 1. Create the IAM Role that the EC2 instance will assume
+resource "aws_iam_role" "ec2_ssm_role" {
+  name = "dev-proj-ec2-ssm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# 2. Attach a policy to the role granting access ONLY to your free SSM parameter
+resource "aws_iam_role_policy" "ec2_ssm_policy" {
+  name = "dev-proj-ec2-ssm-policy"
+  role = aws_iam_role.ec2_ssm_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
+        Resource = "${aws_ssm_parameter.rds_host.arn}" # Dynamically links to your parameter!
+      }
+    ]
+  })
+}
+
+# 3. Create the Instance Profile wrapper that the EC2 module needs
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "dev-proj-ec2-ssm-instance-profile"
+  role = aws_iam_role.ec2_ssm_role.name
+}
+

@@ -1,0 +1,19 @@
+# Correct way to ignore the local terraform working directory
+.terraform/
+
+# Ignore the lock file if you don't want to lock provider versions
+.terraform.lock.hcl
+
+# Ignore all local state files (these contain sensitive infrastructure data!)
+*.tfstate
+*.tfstate.*
+
+# Ignore crash logs
+crash.log
+crash.*.log
+
+# Ignore local variable definitions (where your database passwords live!)
+*.tfvars
+*.tfvars.json
+
+.terraform.lock.hcl

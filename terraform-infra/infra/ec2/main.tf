@@ -7,6 +7,8 @@ variable "sg_enable_ssh_https" {}
 variable "enable_public_ip_address" {}
 variable "user_data_install_apache" {}
 variable "ec2_sg_name_for_python_api" {}
+variable "iam_instance_profile" {}
+
 
 output "ssh_connection_string_for_ec2" {
   value = format("%s%s", "ssh -i /home/ubuntu/keys/aws_ec2_terraform ubuntu@", aws_instance.dev_proj_1_ec2.public_ip)
@@ -28,7 +30,7 @@ resource "aws_instance" "dev_proj_1_ec2" {
   associate_public_ip_address = var.enable_public_ip_address
 
   user_data = var.user_data_install_apache
-
+  iam_instance_profile = var.iam_instance_profile
   metadata_options {
     http_endpoint = "enabled"  # Enable the IMDSv2 endpoint
     http_tokens   = "required" # Require the use of IMDSv2 tokens
