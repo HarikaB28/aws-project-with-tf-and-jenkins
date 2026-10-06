@@ -14,6 +14,10 @@ The system is decoupled across three distinct Git repositories to ensure high mo
 2. **Application Source Code (Repo - ../py-mysql-db-app):** Contains the functional backend logic, written as a modular **Python Application**.
 3. **Application Environment Infrastructure (Repo - terraform-infra):** Defines the isolated target runtime environment. Uses **Terraform** to provision the specific production networking (VPC, Subnets, ALBs), data layers (**Amazon RDS SQL** instances), and required compute resources for the Python app.
 
+![Architecture1](./architecture1.png)
+
+![Architecture2](./architecture2.png)
+
 ---
 
 ## ⚙️ Core CI/CD Engine Workflow
@@ -37,3 +41,5 @@ When code updates or infrastructure modifications are pushed to Git, the archite
 * **Continuous Integration & Deployment (CI/CD):** Jenkins (Pipeline-as-Code, Automation Plugins, Webhooks)
 * **Programming & Scripting:** Python, Bash/Shell Scripting
 * **Methodologies:** GitOps, Architecture Decoupling, Principle of Least Privilege (IAM)
+
+![WebServer output](output.png)
